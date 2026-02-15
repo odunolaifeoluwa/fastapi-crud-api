@@ -1,57 +1,56 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, status
 from typing import List
+from app.models.item import Item
 
-app = FastAPI(title="FastAPI routes without a database")
+router = APIRouter(
+    prefix="/items",
+    tags=["Items"]
+)
 
-@app.get("/")
-def home():
-    return {"message": "Welcome to my API"}
-
-# Fake database (just Python list)
+# Fake database
 items = []
 
-# Pydantic model
-class Item(BaseModel):
-    id: int
-    name: str
-    price: float
+# GET All Items
 
-# Get All items
-
-@app.get("/items", response_model=List[Item])
+@router.get("/", response_model=List[Item])
 def get_items():
     return items
 
-# Get single item by ID
+# GET Single Item
 
-@app.get("/items/{item_id}")
+@router.get("/{item_id}", response_model=Item)
 def get_single_item(item_id: int):
     for item in items:
         if item.id == item_id:
             return item
     raise HTTPException(status_code=404, detail="Item not found")
 
-# Create a new item
+# CREATE an Item
 
-@app.post("/items")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_item(item: Item):
     items.append(item)
-    return {"message": "Item created successfully", "item": item}
+    return {
+        "message": "Item created successfully",
+        "item": item
+    }
 
-# Update an existing item by ID
+# UPDATE Item
 
-@app.put("/items/{item_id}")
+@router.put("/{item_id}")
 def update_item(item_id: int, updated_item: Item):
     for index, item in enumerate(items):
         if item.id == item_id:
             items[index] = updated_item
-            return {"message": "Item updated successfully", "item": updated_item}
+            return {
+                "message": "Item updated successfully",
+                "item": updated_item
+            }
     raise HTTPException(status_code=404, detail="Item not found")
 
-# Delete an item by ID
+# DELETE Item
 
-@app.delete("/items/{item_id}")
+@router.delete("/{item_id}")
 def delete_item(item_id: int):
     for index, item in enumerate(items):
         if item.id == item_id:
